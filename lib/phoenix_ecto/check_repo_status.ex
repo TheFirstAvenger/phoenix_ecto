@@ -7,6 +7,7 @@ defmodule Phoenix.Ecto.CheckRepoStatus do
 
   ## Plug options
 
+    * `:exclude_repos` - list of repos to exclude from the check
     * `:otp_app` - name of the application which the repos are fetched from
     * `:migration_paths` - a function that accepts a repo and returns a migration directory, or a list of migration directories, that is used to check for pending migrations
     * `:migration_lock` - the locking strategy used by the Ecto Adapter when checking for pending migrations. Set to `false` to disable migration locks.
@@ -25,7 +26,7 @@ defmodule Phoenix.Ecto.CheckRepoStatus do
   end
 
   def call(%Conn{} = conn, opts) do
-    repos = Application.get_env(opts[:otp_app], :ecto_repos, [])
+    repos = Application.get_env(opts[:otp_app], :ecto_repos, []) -- Keyword.get(opts, :exclude_repos, [])
 
     for repo <- repos, Process.whereis(repo) do
       unless check_pending_migrations!(repo, opts) do
